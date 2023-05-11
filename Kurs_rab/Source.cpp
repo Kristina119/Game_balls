@@ -12,13 +12,13 @@ const int AREA_WIDTH = 600;
 const int AREA_HEIGHT = 600;
 Mix_Chunk* Sound = NULL;
 Mix_Music* fon = NULL;
-int BALL_COUNT=20;
+int BALL_COUNT=10;
 
 struct Rect
 {
     SDL_Rect ball;
-    int color,line,number,up_number;
-    bool connect;
+    int color,line,number,up_number,up_i;
+    bool connect,dis;
     SDL_Texture* ballTexture;
 };
 
@@ -46,7 +46,7 @@ void init_balls(Rect balls[])
     for (int i = 0; i < BALL_COUNT; i++)
     {
         srand(time(NULL)-i*i*10000);
-        balls[i].color = rand()%4+1;/////////
+        balls[i].color = rand()%2+1;/////////
         
         w = 60;
         x = x + w;
@@ -63,7 +63,7 @@ void init_balls(Rect balls[])
         if (rad % 2 == 1)balls[i].number = (x-w/2) / w;
         balls[i].ball = { x ,y ,w ,w };
         srand(time(NULL));
-        
+        balls[i].dis = 1;
     }
 }
 
@@ -161,7 +161,7 @@ int check_colors(Rect balls[],Rect main_b,int& k,int j,checking tmp)
 
                 balls[j].ball.w = balls[i].ball.w = 0;
                 balls[j].ball.x = balls[j].ball.y = balls[i].ball.x = balls[i].ball.y = -1000;
-                if (k>1) balls[j].line = balls[j].number = balls[i].line = balls[i].number = -100;
+                 balls[j].line = balls[j].number = balls[i].line = balls[i].number = -100;
                 if (k>1) flag = 1;
                 check_colors(balls, BALL, k, i,tmp);
 
@@ -219,12 +219,14 @@ void up_balls(Rect balls[],Rect one_ball,int j)
         rule = (balls[i].line == line - 1 && line % 2 == 1 && (balls[i].number == number || balls[i].number == number + 1));//есть шарик сверху справа или слева, нечетный ряд
         rule1= (balls[i].line == line - 1 && line % 2 == 0 && (balls[i].number == number || balls[i].number == number - 1));//есть шарик сверху справа или слева, четный ряд
         if (rule && line % 2 == 1) {
-            balls[j].up_number = i;
+            balls[j].up_i = i;
+            balls[j].up_number = balls[i].number;
             balls[j].connect = 1; return;
         }
         else {
             if (rule1 && line % 2 == 0) {
-                balls[j].up_number = i;
+                balls[j].up_i = i;
+                balls[j].up_number = balls[i].number;
                 balls[j].connect = 1; return;
             }
             else balls[j].connect = 0;
@@ -269,9 +271,78 @@ void dissapear(SDL_Renderer*& renderer, Rect balls[], int point, int numbers[])
     }
 }
 
+int check_dissapear(Rect balls[], Rect cur_ball, int numbers[], int point, int num_ball, SDL_Renderer*& renderer)
+{
+    int neigh = -1,povtor=0,error=0;
+    bool flag = 0;
+    if (cur_ball.ball.w==0) return 0;
+    if (cur_ball.line == 0) return 0;
+    if (cur_ball.line == 1 && cur_ball.connect == 1) return 0;
+    for (int i = 0;i < BALL_COUNT;i++)
+    {
+      if (balls[i].line == cur_ball.line && (balls[i].number == cur_ball.number - 1 || balls[i].number == cur_ball.number + 1) && povtor == 0) { neigh = i; }
+      for (int n = 0;n < point;n++)
+      {
+          if (neigh == numbers[n]) povtor = 1;
+          
+      }
+    }
 
+    
 
-int check_dissapear(Rect balls[],Rect ball,int numbers[],int point,int num_ball, SDL_Renderer*& renderer)
+    for (int i = 0;i < BALL_COUNT;i++)
+    {
+        
+
+        if (cur_ball.connect==1) 
+        {
+            if (num_ball!= numbers[point-1] && num_ball != numbers[point - 2])
+            {
+                numbers[point] = num_ball;
+                point++;
+            }
+            check_dissapear(balls, balls[cur_ball.up_i], numbers, point, cur_ball.up_i, renderer);
+        }
+
+        if (cur_ball.connect == 0 && neigh != -1)
+        {
+            
+            if (num_ball != numbers[point-1] && num_ball != numbers[point - 2])
+            {
+                numbers[point] = num_ball;
+                point++;
+            }
+            check_dissapear(balls, balls[neigh], numbers, point, neigh, renderer);
+        }
+
+        if (cur_ball.connect == 0 && neigh == -1)
+        {
+            if (num_ball != numbers[point-1] && num_ball != numbers[point - 2])
+            {
+                numbers[point] = num_ball;
+                point++;
+                flag = 1;
+            }
+            
+        }
+    }
+
+    if (flag == 1)
+    {
+        cout << "Point = " << point << endl;
+        dissapear(renderer, balls, point, numbers);
+        /*for (int n = 0;n < point;n++)
+        {
+            int num = numbers[n];
+            
+            cout<<numbers[n] << "  ";
+        }*/
+
+    }
+    return 1;
+}
+
+/*int check_dissapear(Rect balls[], Rect ball, int numbers[], int point, int num_ball, SDL_Renderer*& renderer)
 {
     int flag = 0,tmp=-1;
     bool rule = 0,povtor=0;
@@ -281,6 +352,7 @@ int check_dissapear(Rect balls[],Rect ball,int numbers[],int point,int num_ball,
             for (int j = 0;j < BALL_COUNT;j++)
             {
                 if (balls[j].ball.w==0) continue;
+                if (balls[j].line == 0) continue;
                 for (int n = 0;n < point;n++)
                 {
                     if (j == numbers[n]) povtor = 1;
@@ -325,14 +397,30 @@ int check_dissapear(Rect balls[],Rect ball,int numbers[],int point,int num_ball,
     if (flag == -1)
     {
         cout << "point = " << point<<endl;
-        dissapear(renderer, balls, point, numbers);
+        for (int i = 0;i < point;i++)
+        {
+            int num = numbers[i];
+            
+            balls[num].dis = 0;
+        }
+        int l = 0;
+        for (int i = 0;i < BALL_COUNT;i++)
+        {
+            
+            if (balls[i].dis == 0) {
+                numbers[l] = i;
+                l++;
+            }
+        }
+
+        dissapear(renderer, balls, l, numbers);
         
         //for (int n = 0;n < point;n++)
         
             /*int num = numbers[n];
             balls[num].ball.w = 0;
             balls[num].ball.x = balls[num].ball.y = -1000;
-            balls[num].line = balls[num].number = -100;*/
+            balls[num].line = balls[num].number = -100;//
 
 
         
@@ -340,7 +428,7 @@ int check_dissapear(Rect balls[],Rect ball,int numbers[],int point,int num_ball,
     point = 0;
     return 0;
     
-}
+}*/
 
 
 int light(SDL_Renderer*& renderer)
@@ -580,14 +668,20 @@ int light(SDL_Renderer*& renderer)
                         for (int i = 0;i < BALL_COUNT;i++)
                         {
                             up_balls(balls, balls[i], i);
+                            
                             //cout << " ball " << i << ")  connect = " << balls[i].connect;
                         }
                         int numbers[200];
-                        
+                        int skip[200],l=0;
                         for (int i = 0;i < BALL_COUNT;i++)
                         {
+                            
                             if (balls[i].ball.w == 0) continue;
+                            cout << " CHEK  " << i << endl;
                             check_dissapear(balls, balls[i], numbers, 0,i,renderer);
+                            if (int p= check_dissapear(balls, balls[i], numbers, 0, i, renderer) == 1) {
+                                skip[l] = i;  i = 0;
+                            }
                             
                                 SDL_SetRenderDrawColor(renderer, 255, 248, 220, 0);
                                 SDL_RenderClear(renderer);
