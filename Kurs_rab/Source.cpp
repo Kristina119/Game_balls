@@ -18,7 +18,7 @@ struct Rect
 {
     SDL_Rect ball;
     int color,line,number,up_number,up_i;
-    bool connect,dis;
+    bool connect,dis=0;
     SDL_Texture* ballTexture;
 };
 
@@ -63,7 +63,7 @@ void init_balls(Rect balls[])
         if (rad % 2 == 1)balls[i].number = (x-w/2) / w;
         balls[i].ball = { x ,y ,w ,w };
         srand(time(NULL));
-        balls[i].dis = 1;
+        balls[i].dis = 0;
     }
 }
 
@@ -229,7 +229,9 @@ void up_balls(Rect balls[],Rect one_ball,int j)
                 balls[j].up_number = balls[i].number;
                 balls[j].connect = 1; return;
             }
-            else balls[j].connect = 0;
+            else {
+                balls[j].connect = 0;balls[j].up_number = -1;
+            }
         }
         
     }
@@ -249,17 +251,17 @@ void dissapear(SDL_Renderer*& renderer, Rect balls[], int point, int numbers[])
     {
         num = numbers[n];
         balls[num].ballTexture = ballTexture1;
-        SDL_DestroyTexture(ballTexture1);
+        
         
     }
     for (int i = 0;i < BALL_COUNT;i++)
     {
         if (balls[i].ball.w == 0) continue;
         SDL_RenderCopy(renderer, balls[i].ballTexture, NULL, &balls[i].ball);
-        
+        SDL_RenderPresent(renderer);
+        SDL_Delay(50);
     }
-    SDL_RenderPresent(renderer);
-    SDL_Delay(200);
+    
 
     for (int n = 0;n < point;n++)
     {
@@ -275,56 +277,68 @@ int check_dissapear(Rect balls[], Rect cur_ball, int numbers[], int point, int n
 {
     int neigh = -1,povtor=0,error=0;
     bool flag = 0;
+    
+    if (cur_ball.line == 0) {
+        balls[num_ball].dis = 1;
+        
+        for (int i = 0;i < point;i++) { balls[numbers[i]].dis = 1;}
+        return 0;
+    }
     if (cur_ball.ball.w==0) return 0;
-    if (cur_ball.line == 0) return 0;
+    
     if (cur_ball.line == 1 && cur_ball.connect == 1) return 0;
     for (int i = 0;i < BALL_COUNT;i++)
     {
-      if (balls[i].line == cur_ball.line && (balls[i].number == cur_ball.number - 1 || balls[i].number == cur_ball.number + 1) && povtor == 0) { neigh = i; }
-      for (int n = 0;n < point;n++)
-      {
-          if (neigh == numbers[n]) povtor = 1;
-          
-      }
+        if (balls[i].line == cur_ball.line && (balls[i].number == cur_ball.number - 1 || balls[i].number == cur_ball.number + 1) && povtor == 0)
+        {
+            neigh = i;
+            for (int n = 0;n < point;n++)
+            {
+                if (neigh == numbers[n]) { povtor = 1;neigh = -1; break; }
+
+            }
+            if (povtor == 0)break;
+        }
+        else neigh = -1;
+     
     }
 
     
 
-    for (int i = 0;i < BALL_COUNT;i++)
+    if (cur_ball.connect == 1)
     {
-        
-
-        if (cur_ball.connect==1) 
+        if (num_ball != numbers[point - 1] && num_ball != numbers[point - 2])
         {
-            if (num_ball!= numbers[point-1] && num_ball != numbers[point - 2])
+            numbers[point] = num_ball;
+            point++;
+        }
+        check_dissapear(balls, balls[cur_ball.up_i], numbers, point, cur_ball.up_i, renderer);
+    }
+
+    if (cur_ball.connect == 0 && neigh != -1)
+    {
+
+        if (num_ball != numbers[point - 1] && num_ball != numbers[point - 2])
+        {
+            numbers[point] = num_ball;
+            point++;
+        }
+        check_dissapear(balls, balls[neigh], numbers, point, neigh, renderer);
+    }
+
+    if (cur_ball.connect == 0 && neigh == -1)
+    {
+        if (num_ball != numbers[point - 1] && num_ball != numbers[point - 2])
+        {
+            numbers[point] = num_ball;
+            point++;
+            flag = 1;
+            for (int i = 0;i < point;i++)
             {
-                numbers[point] = num_ball;
-                point++;
+                balls[numbers[i]].dis = 0;
             }
-            check_dissapear(balls, balls[cur_ball.up_i], numbers, point, cur_ball.up_i, renderer);
         }
 
-        if (cur_ball.connect == 0 && neigh != -1)
-        {
-            
-            if (num_ball != numbers[point-1] && num_ball != numbers[point - 2])
-            {
-                numbers[point] = num_ball;
-                point++;
-            }
-            check_dissapear(balls, balls[neigh], numbers, point, neigh, renderer);
-        }
-
-        if (cur_ball.connect == 0 && neigh == -1)
-        {
-            if (num_ball != numbers[point-1] && num_ball != numbers[point - 2])
-            {
-                numbers[point] = num_ball;
-                point++;
-                flag = 1;
-            }
-            
-        }
     }
 
     if (flag == 1)
@@ -337,9 +351,9 @@ int check_dissapear(Rect balls[], Rect cur_ball, int numbers[], int point, int n
             
             cout<<numbers[n] << "  ";
         }*/
-
+        return 1;
     }
-    return 1;
+    //return 1;
 }
 
 /*int check_dissapear(Rect balls[], Rect ball, int numbers[], int point, int num_ball, SDL_Renderer*& renderer)
@@ -672,22 +686,41 @@ int light(SDL_Renderer*& renderer)
                             //cout << " ball " << i << ")  connect = " << balls[i].connect;
                         }
                         int numbers[200];
-                        int skip[200],l=0;
+                        int skip[200],l=0,p;
+                        bool f_check=0;
                         for (int i = 0;i < BALL_COUNT;i++)
                         {
-                            
+                            f_check = 0;
                             if (balls[i].ball.w == 0) continue;
-                            cout << " CHEK  " << i << endl;
-                            check_dissapear(balls, balls[i], numbers, 0,i,renderer);
-                            if (int p= check_dissapear(balls, balls[i], numbers, 0, i, renderer) == 1) {
-                                skip[l] = i;  i = 0;
+                            if (balls[i].line == 0) continue;
+                            for (int j = 0;j < l;j++)
+                            {
+                                if (skip[j] == i) f_check = 1;
                             }
-                            
+                            if (f_check == 1) continue;
+                            cout << " CHEK  " << i <<" ball.dis= "<<balls[i].dis << endl;
+                            //check_dissapear(balls, balls[i], numbers, 0,i,renderer);|| balls[i].ball.w == 0
+                            p = 0;int o = -1;
+                            up_balls(balls, balls[i], i);
+                            o = check_dissapear(balls, balls[i], numbers, p, i, renderer);
+                            if (i == BALL_COUNT - 1)
+                                int reko=0;
+                            if ( o == 1) {
+                                cout << " CHEK_TRUE  " << i << endl;
+                                skip[l] = i;  
+                                i = 0; l++; 
+                                int n[1];
+                                
+
                                 SDL_SetRenderDrawColor(renderer, 255, 248, 220, 0);
                                 SDL_RenderClear(renderer);
                                 draw_balls(renderer, balls);
                                 first_draw(renderer, first, ballTexture1);
                                 SDL_RenderPresent(renderer);
+                                //continue;
+                            }
+                            
+                                
                            
                         }
                     }
