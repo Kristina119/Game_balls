@@ -382,7 +382,7 @@ int middle(SDL_Renderer*& renderer)
     BALL_COUNT = 47;
     tries = 30;
     first_tries = 30;
-
+    count_score = 0;
     int x, y, x1, y1, r1 = 1, r2 = 1, co, location, flag1, flag_end = 0, wall = 0, func = 0;
     checking tmp{};
     SDL_Rect area = { (SCREEN_WIDTH - AREA_WIDTH) / 2, (SCREEN_HEIGHT - AREA_HEIGHT) / 2, AREA_WIDTH,AREA_HEIGHT };//поле для игры
@@ -446,7 +446,7 @@ int middle(SDL_Renderer*& renderer)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) return 0; //закрыть игру
+            if (event.type == SDL_QUIT) return 1; //закрыть игру
             flag1 = 1;
 
             //нажали на мышь, шарик полетел
@@ -863,12 +863,12 @@ int middle(SDL_Renderer*& renderer)
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
-                return 0;
+                return 1;
 
-            if (draw_result(renderer, quit, event, 2) == -1)
+            if (draw_result(renderer, quit, event, 2) == 0)
             {
                 quit = true;
-                return 1;////////выход в меню
+                return 0;////////выход в меню
             }
             /* //текстуры кнопок и результатов
                  SDL_Rect result_rect = { 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -984,12 +984,12 @@ int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level)
             SDL_DestroyTexture(textTexture2);
             TTF_CloseFont(my_font);
             quit = true;
-            return -1;////////выход в меню
+            return 0;////////выход в меню
         }
         if (is_button_hit(lvl_res, event.button.x, event.button.y))
         {
             if (level==1) middle(renderer);
-            if (level==2) return -1;//hard();
+            if (level==2) return 0;//hard();
         }
          //переход на следующий уровень
     }
@@ -998,7 +998,9 @@ int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level)
 int light(SDL_Renderer*& renderer)
 {
     int x, y,x1,y1,r1=1,r2=1,co,location,flag1,flag_end=0,wall=0,func=0;
+    BALL_COUNT = 47;
     tries = 20;first_tries = 20;
+    count_score = 0;
     checking tmp{};
     SDL_Rect area = { (SCREEN_WIDTH-AREA_WIDTH)/2, (SCREEN_HEIGHT-AREA_HEIGHT)/2, AREA_WIDTH,AREA_HEIGHT };//поле для игры
     SDL_Surface* background_image = IMG_Load("mm.bmp");
@@ -1061,7 +1063,7 @@ int light(SDL_Renderer*& renderer)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) return 0; //закрыть игру
+            if (event.type == SDL_QUIT) return 1; //закрыть игру
             flag1 = 1;
 
             //нажали на мышь, шарик полетел
@@ -1385,17 +1387,18 @@ int light(SDL_Renderer*& renderer)
         //break;
     }
     bool quit = false;
+    SDL_Event event1;
     while (!quit)
     {
-        while (SDL_PollEvent(&event))
+        while (SDL_PollEvent(&event1))
         {
-            if (event.type == SDL_QUIT)
-                return 0;
+            if (event1.type == SDL_QUIT)
+                return 1;
 
-            if (draw_result(renderer,quit,event,1)==-1) 
+            if (draw_result(renderer,quit,event1,1)==0) 
             {
                 quit = true;
-                return 1;////////выход в меню
+                return 0;////////выход в меню
             }
            /* //текстуры кнопок и результатов
                 SDL_Rect result_rect = { 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
@@ -1466,10 +1469,136 @@ int light(SDL_Renderer*& renderer)
     //return 1;//закрыть уровень
 }
 
+int level_menu(SDL_Renderer*& renderer)
+{
+    SDL_Rect menu_rect = { 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_Surface* menu = IMG_Load("menu.bmp");
+    SDL_Texture* menuTexture = SDL_CreateTextureFromSurface(renderer, menu);
+    SDL_FreeSurface(menu);
+    SDL_RenderCopy(renderer, menuTexture, NULL, &menu_rect);//задний фон меню
+
+
+    SDL_Rect start_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2,SCREEN_HEIGHT / 7.5 * 1.5,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* start_menu_image = IMG_Load("light_menu.bmp");
+    SDL_Texture* start_menu_texture = SDL_CreateTextureFromSurface(renderer, start_menu_image);
+    SDL_FreeSurface(start_menu_image);
+    SDL_RenderCopy(renderer, start_menu_texture, NULL, &start_menu);//легкий уровень
+
+
+    SDL_Rect set_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2, SCREEN_HEIGHT / 7.5 * 3,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* set_menu_image = IMG_Load("middle_menu.bmp");
+    SDL_Texture* set_menu_texture = SDL_CreateTextureFromSurface(renderer, set_menu_image);
+    SDL_FreeSurface(set_menu_image);
+    SDL_RenderCopy(renderer, set_menu_texture, NULL, &set_menu);//средний уровень
+
+    SDL_Rect record_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2, SCREEN_HEIGHT / 7.5 * 4.5,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* record_menu_image = IMG_Load("special_menu.bmp");
+    SDL_Texture* record_menu_texture = SDL_CreateTextureFromSurface(renderer, record_menu_image);
+    SDL_FreeSurface(record_menu_image);
+    SDL_RenderCopy(renderer, record_menu_texture, NULL, &record_menu);//специальный уровень
+
+    SDL_Rect exit_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2, SCREEN_HEIGHT / 7.5 * 6,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* exit_menu_image = IMG_Load("exit_menu.bmp");
+    SDL_Texture* exit_menu_texture = SDL_CreateTextureFromSurface(renderer, exit_menu_image);
+    SDL_FreeSurface(exit_menu_image);
+    SDL_RenderCopy(renderer, exit_menu_texture, NULL, &exit_menu);//выход
+
+
+    SDL_RenderPresent(renderer);
+    SDL_Event event;
+    bool quit = false;
+    while (!quit)
+    {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT) return -1;
+            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+            {
+
+                if (is_button_hit(start_menu, event.button.x, event.button.y))
+                {
+                    return 1;////////выход в выбор уровней
+                }
+                if (is_button_hit(set_menu, event.button.x, event.button.y))
+                {
+                    return 2;//////настройки
+                }
+                if (is_button_hit(record_menu, event.button.x, event.button.y))
+                {
+                    return 3;//////рекорды
+                }
+                if (is_button_hit(exit_menu, event.button.x, event.button.y))
+                {
+                    return 4;//////выход
+                }
+            }
+        }
+    }
+    if (quit == true) return -1;
+}
+
+int menu(SDL_Renderer*& renderer, SDL_Event event)
+{
+    SDL_Rect menu_rect = { 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_Surface* menu = IMG_Load("menu.bmp");
+    SDL_Texture* menuTexture = SDL_CreateTextureFromSurface(renderer, menu);
+    SDL_FreeSurface(menu);
+    SDL_RenderCopy(renderer, menuTexture, NULL, &menu_rect);//задний фон меню
+    
+    
+    SDL_Rect start_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2,SCREEN_HEIGHT / 7.5 * 1.5,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* start_menu_image = IMG_Load("start_menu.bmp");
+    SDL_Texture* start_menu_texture = SDL_CreateTextureFromSurface(renderer, start_menu_image);
+    SDL_FreeSurface(start_menu_image);
+    SDL_RenderCopy(renderer, start_menu_texture, NULL, &start_menu);//начать игру
+
+    
+    SDL_Rect set_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2, SCREEN_HEIGHT / 7.5 * 3,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* set_menu_image = IMG_Load("settings_menu.bmp");
+    SDL_Texture* set_menu_texture = SDL_CreateTextureFromSurface(renderer, set_menu_image);
+    SDL_FreeSurface(set_menu_image);
+    SDL_RenderCopy(renderer, set_menu_texture, NULL, &set_menu);//настройки
+
+    SDL_Rect record_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2, SCREEN_HEIGHT / 7.5 * 4.5,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* record_menu_image = IMG_Load("record_menu.bmp");
+    SDL_Texture* record_menu_texture = SDL_CreateTextureFromSurface(renderer, record_menu_image);
+    SDL_FreeSurface(record_menu_image);
+    SDL_RenderCopy(renderer, record_menu_texture, NULL, &record_menu);//рекорды
+
+    SDL_Rect exit_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2, SCREEN_HEIGHT / 7.5 * 6,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* exit_menu_image = IMG_Load("exit_menu.bmp");
+    SDL_Texture* exit_menu_texture = SDL_CreateTextureFromSurface(renderer, exit_menu_image);
+    SDL_FreeSurface(exit_menu_image);
+    SDL_RenderCopy(renderer, exit_menu_texture, NULL, &exit_menu);//выход
+
+
+    SDL_RenderPresent(renderer);
+
+    if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+    {
+
+        if (is_button_hit(start_menu, event.button.x, event.button.y))
+        {
+            return 1;////////выход в выбор уровней
+        }
+        if (is_button_hit(set_menu, event.button.x, event.button.y))
+        {
+            return 2;//////настройки
+        }
+        if (is_button_hit(record_menu, event.button.x, event.button.y))
+        {
+            return 3;//////рекорды
+        }
+        if (is_button_hit(exit_menu, event.button.x, event.button.y))
+        {
+            return 4;//////выход
+        }
+    }
+}
 
 int main(int argc, char** argv)
 {
-    int level = 1;
+    int level = -1;
     SDL_Init(SDL_INIT_EVERYTHING);
     SDL_Window* window = SDL_CreateWindow("Click the balls",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
@@ -1477,13 +1606,56 @@ int main(int argc, char** argv)
     SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, 0);
     SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
 
+    SDL_Event event;
+    bool quit = false;
+    while (!quit)
+    {
+
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT) return 0;
+            level = menu(renderer, event);
+            if (level == 1)
+            {
+                int chose = level_menu(renderer);
+                if (chose == 1)
+                {
+                    int res = light(renderer);
+                    if (res == 1) return 0;
+                    if (res == 0)  break;
+                }
+                if (chose == 2)
+                {
+                    int res2 = middle(renderer);
+                    if (res2 == 1) return 0;
+                    if (res2 == 0)  break;
+                }
+                if (chose == 3);
+                if (chose == 4) break;
+                if (chose == -1) return 0;
+            }
 
 
+            if (level == 2);
+            if (level == 3);
+            if (level == 4) return 0;
+        }
+    }
+    /*if (level == 1)
+    {
+        int res = light(renderer);
+        if (res == 1) return 0;
+        if (res == 0)  break;
+    }
+    if (level == 2)
+    {
+        int res2 = middle(renderer);
+        if (res2 == 1) return 0;
+        if (res2 == 0)  break;
+    }
+    if (level == 3);
+    if (level == 4) return 0;*/
 
-
-    if (level == 1) light(renderer);
-    if (level == 2)middle(renderer);
-    
     TTF_Quit();
     Mix_FreeChunk(Sound);
     Mix_CloseAudio();
