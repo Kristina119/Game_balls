@@ -468,7 +468,7 @@ int settings(SDL_Renderer* renderer, TTF_Font* my_font, int* x) {
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) { quit = true; return -3; }
+            if (event.type == SDL_QUIT) { quit = true; exit(1); }
             if (event.button.button == SDL_BUTTON_LEFT)
             {
                 for (int i = 0; i < 2; i++) if (is_button_hit(sliders[i], event.button.x, event.button.y)) { x[i] = event.button.x; }
@@ -496,7 +496,7 @@ int settings(SDL_Renderer* renderer, TTF_Font* my_font, int* x) {
     }
 }
 
-int draw_result(SDL_Renderer*& renderer, bool quit, SDL_Event event, int level);
+int draw_result(SDL_Renderer*& renderer, bool quit, SDL_Event event, int level,int type);
 
 int middle(SDL_Renderer*& renderer)
 {
@@ -510,7 +510,7 @@ int middle(SDL_Renderer*& renderer)
     //char bad_finalsound[13] = "zvyk.wav";
     char good_finalsound[20] = "good_final.wav";
     char buttonsound[13] = "button.wav";
-    int x, y, x1, y1, r1 = 1, r2 = 1, co, location, flag1, flag_end = 0, wall = 0, func = 0;
+    int x, y, x1, y1, r1 = 1, r2 = 1, co, location, flag1, flag_end = 0, wall = 0, func = 0,times=0;
     checking tmp{};
     SDL_Rect area = { (SCREEN_WIDTH - AREA_WIDTH) / 2, (SCREEN_HEIGHT - AREA_HEIGHT) / 2, AREA_WIDTH,AREA_HEIGHT };//поле для игры
     SDL_Surface* background_image = IMG_Load("mm.bmp");
@@ -564,7 +564,7 @@ int middle(SDL_Renderer*& renderer)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) return 1; //закрыть игру
+            if (event.type == SDL_QUIT) exit(1); //закрыть игру
             flag1 = 1;
 
             //нажали на мышь, шарик полетел
@@ -804,7 +804,7 @@ int middle(SDL_Renderer*& renderer)
 
                     if (flag_end == 1)//шарик уже использован
                     {
-
+                        times++;
                         for (int i = 0;i < BALL_COUNT;i++)
                         {
                             up_balls(balls, balls[i], i);
@@ -852,80 +852,85 @@ int middle(SDL_Renderer*& renderer)
                                 _itoa_s(tries, text2, 10);
                                 textTexture2 = get_text_texture(renderer, text2, my_font);
                                 draw_text(renderer, textTexture2, 2, 0, 0, 0);
-
+                                
                             }
                         }
 
-                        int even_or_odd = -1;
-                        for (int i = 0;i < BALL_COUNT;i++)
+
+                        if (times == 2) 
                         {
-                            if (balls[i].line == 0) even_or_odd = balls[i].line_odd_or_even;
-                            balls[i].line = balls[i].line + 1;
-                            balls[i].ball.y += 60;
-                        }
-                        int x = 0, y = 50, w = 60;
-                        if (even_or_odd == 0)
-                        {
-                            x = 80 - w; BALL_COUNT += 15;
-                            int k = BALL_COUNT - 15;
-                            balls = (Rect*)realloc(balls, sizeof(Rect) * BALL_COUNT);
-                            for (int i = k;i < BALL_COUNT;i++)
+                            int even_or_odd = -1;
+                            for (int i = 0;i < BALL_COUNT;i++)
                             {
-                                srand(time(NULL) - i * i * 10000);
-                                balls[i].color = rand() % 3 + 1;/////////
-                                w = 60;
-                                x = x + w;
-                                balls[i].line = 0;
-                                balls[i].number = (x - w / 2) / w;
-                                balls[i].line_odd_or_even = 1;
-                                balls[i].ball = { x ,y ,w ,w };
-                                balls[i].up_i = NULL;
-                                balls[i].up_number = NULL;
-                                balls[i].connect = 1;
-                                SDL_Surface* ballImage = IMG_Load("1.bmp");;
-                                if (balls[i].color == 1) ballImage = IMG_Load("1.bmp");
-                                if (balls[i].color == 2) ballImage = IMG_Load("2.bmp");
-                                if (balls[i].color == 3) ballImage = IMG_Load("3.bmp");
-                                if (balls[i].color == 4) ballImage = IMG_Load("4.bmp");
-                                SDL_SetColorKey(ballImage, SDL_TRUE, SDL_MapRGB(ballImage->format, 255, 255, 255));
-                                balls[i].ballTexture = SDL_CreateTextureFromSurface(renderer, ballImage);
-                                SDL_FreeSurface(ballImage);
-
+                                if (balls[i].line == 0) even_or_odd = balls[i].line_odd_or_even;
+                                balls[i].line = balls[i].line + 1;
+                                balls[i].ball.y += 60;
                             }
-
-                        }
-                        if (even_or_odd == 1)
-                        {
-                            x = -10;
-                            BALL_COUNT += 16;
-                            int n = BALL_COUNT - 16;
-                            balls = (Rect*)realloc(balls, sizeof(Rect) * BALL_COUNT);
-                            for (int i = n;i < BALL_COUNT;i++)
+                            int x = 0, y = 50, w = 60;
+                            if (even_or_odd == 0)
                             {
-                                srand(time(NULL) - i * i * 10000);
-                                balls[i].color = rand() % 3 + 1;/////////
-                                w = 60;
-                                x = x + w;
-                                balls[i].line = 0;
-                                balls[i].number = x / w;
-                                balls[i].line_odd_or_even = 0;
-                                balls[i].ball = { x ,y ,w ,w };
+                                x = 80 - w; BALL_COUNT += 15;
+                                int k = BALL_COUNT - 15;
+                                balls = (Rect*)realloc(balls, sizeof(Rect) * BALL_COUNT);
+                                for (int i = k;i < BALL_COUNT;i++)
+                                {
+                                    srand(time(NULL) - i * i * 10000);
+                                    balls[i].color = rand() % 3 + 1;/////////
+                                    w = 60;
+                                    x = x + w;
+                                    balls[i].line = 0;
+                                    balls[i].number = (x - w / 2) / w;
+                                    balls[i].line_odd_or_even = 1;
+                                    balls[i].ball = { x ,y ,w ,w };
+                                    balls[i].up_i = NULL;
+                                    balls[i].up_number = NULL;
+                                    balls[i].connect = 1;
+                                    SDL_Surface* ballImage = IMG_Load("1.bmp");;
+                                    if (balls[i].color == 1) ballImage = IMG_Load("1.bmp");
+                                    if (balls[i].color == 2) ballImage = IMG_Load("2.bmp");
+                                    if (balls[i].color == 3) ballImage = IMG_Load("3.bmp");
+                                    if (balls[i].color == 4) ballImage = IMG_Load("4.bmp");
+                                    SDL_SetColorKey(ballImage, SDL_TRUE, SDL_MapRGB(ballImage->format, 255, 255, 255));
+                                    balls[i].ballTexture = SDL_CreateTextureFromSurface(renderer, ballImage);
+                                    SDL_FreeSurface(ballImage);
 
-                                SDL_Surface* ballImage = IMG_Load("1.bmp");;
-                                if (balls[i].color == 1) ballImage = IMG_Load("1.bmp");
-                                if (balls[i].color == 2) ballImage = IMG_Load("2.bmp");
-                                if (balls[i].color == 3) ballImage = IMG_Load("3.bmp");
-                                if (balls[i].color == 4) ballImage = IMG_Load("4.bmp");
-                                SDL_SetColorKey(ballImage, SDL_TRUE, SDL_MapRGB(ballImage->format, 255, 255, 255));
-                                balls[i].ballTexture = SDL_CreateTextureFromSurface(renderer, ballImage);
-                                SDL_FreeSurface(ballImage);
+                                }
+
                             }
+                            if (even_or_odd == 1)
+                            {
+                                x = -10;
+                                BALL_COUNT += 16;
+                                int n = BALL_COUNT - 16;
+                                balls = (Rect*)realloc(balls, sizeof(Rect) * BALL_COUNT);
+                                for (int i = n;i < BALL_COUNT;i++)
+                                {
+                                    srand(time(NULL) - i * i * 10000);
+                                    balls[i].color = rand() % 3 + 1;/////////
+                                    w = 60;
+                                    x = x + w;
+                                    balls[i].line = 0;
+                                    balls[i].number = x / w;
+                                    balls[i].line_odd_or_even = 0;
+                                    balls[i].ball = { x ,y ,w ,w };
+
+                                    SDL_Surface* ballImage = IMG_Load("1.bmp");;
+                                    if (balls[i].color == 1) ballImage = IMG_Load("1.bmp");
+                                    if (balls[i].color == 2) ballImage = IMG_Load("2.bmp");
+                                    if (balls[i].color == 3) ballImage = IMG_Load("3.bmp");
+                                    if (balls[i].color == 4) ballImage = IMG_Load("4.bmp");
+                                    SDL_SetColorKey(ballImage, SDL_TRUE, SDL_MapRGB(ballImage->format, 255, 255, 255));
+                                    balls[i].ballTexture = SDL_CreateTextureFromSurface(renderer, ballImage);
+                                    SDL_FreeSurface(ballImage);
+                                }
+                            }
+                            SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
+                            SDL_RenderClear(renderer);
+                            SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                            draw_balls(renderer, balls);
+                            first_draw(renderer, first, ballTexture1);
+                            times = 0;
                         }
-                        SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
-                        SDL_RenderClear(renderer);
-                        SDL_RenderCopy(renderer, background, NULL, &back_rect);
-                        draw_balls(renderer, balls);
-                        first_draw(renderer, first, ballTexture1);
                     }
 
                 } while (flag_end != 1);
@@ -963,9 +968,9 @@ int middle(SDL_Renderer*& renderer)
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
-                return 1;
+                exit(1);
 
-            if (draw_result(renderer, quit, event, 2) == -3)
+            if (draw_result(renderer, quit, event, 2,1) == -3)
             {
                 quit = true;
                 return 0;////////выход в меню
@@ -987,7 +992,11 @@ int middle(SDL_Renderer*& renderer)
     return 1;
 }
 
-int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level)
+int light(SDL_Renderer*& renderer);
+int special(SDL_Renderer*& renderer);
+int chose_kolvo(SDL_Renderer*& renderer);
+
+int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level,int type)
 {
     //текстуры кнопок и результатов
     char text2[10], text[10],buttonsound[15]="button.wav";
@@ -1014,8 +1023,10 @@ int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level)
     SDL_FreeSurface(menu_res_image);
     SDL_RenderCopy(renderer, menu_res_texture, NULL, &menu_res);
 
-    SDL_Rect lvl_res = { SCREEN_WIDTH / 8 + menu_res.w * 2.4, SCREEN_HEIGHT - 1.5 * 235 / 2, 235, 235 / 2 };
     SDL_Surface* lvl_res_image = IMG_Load("lvl_res.bmp");
+    SDL_Rect lvl_res = { SCREEN_WIDTH / 8 + menu_res.w * 2.4, SCREEN_HEIGHT - 1.5 * 235 / 2, 235, 235 / 2 };
+    if (type==1) lvl_res_image = IMG_Load("lvl_res.bmp");
+    if (type==2) lvl_res_image = IMG_Load("first_lvl_res.bmp");
     SDL_Texture* lvl_res_texture = SDL_CreateTextureFromSurface(renderer, lvl_res_image);
     SDL_FreeSurface(lvl_res_image);
     SDL_RenderCopy(renderer, lvl_res_texture, NULL, &lvl_res);
@@ -1036,8 +1047,9 @@ int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level)
         }
         if (is_button_hit(lvl_res, event.button.x, event.button.y))
         {
-            if (level == 1) { sound(buttonsound); middle(renderer); }
-            if (level == 2) { sound(buttonsound);return -3; }//hard();
+            if (level == 1) { sound(buttonsound); if(middle(renderer)==-1) return-1; }
+            if (level == 2) { sound(buttonsound); if (chose_kolvo(renderer) == -1) return -1; special(renderer); }
+            if (level == 3) { sound(buttonsound); if (light(renderer) == -1) return -1; }
         }
          //переход на следующий уровень
     }
@@ -1046,8 +1058,8 @@ int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level)
 int light(SDL_Renderer*& renderer)
 {
     int x, y,x1,y1,r1=1,r2=1,co,location,flag1,flag_end=0,wall=0,func=0;
-    BALL_COUNT = 47;
-    tries = 20;first_tries = 20;
+    BALL_COUNT = 47+16+15;
+    tries = 40;first_tries = 40;
     count_score = 0;
     char hitsound[13] = "hit.wav";
     char delsound[13] = "delete.wav";
@@ -1063,6 +1075,9 @@ int light(SDL_Renderer*& renderer)
     SDL_FreeSurface(background_image);
     SDL_Rect back_rect = {area.x,area.y,area.w,area.h};
     
+
+
+
     Rect* balls = (Rect*)malloc(BALL_COUNT * sizeof(Rect));//все шары
     init_balls(balls,1);
     for (int i = 0;i < BALL_COUNT;i++)//четыре текстуры для шариков
@@ -1118,7 +1133,7 @@ int light(SDL_Renderer*& renderer)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) return 1; //закрыть игру
+            if (event.type == SDL_QUIT) exit(1);; //закрыть игру
             flag1 = 1;
 
             //нажали на мышь, шарик полетел
@@ -1453,9 +1468,9 @@ int light(SDL_Renderer*& renderer)
         while (SDL_PollEvent(&event1))
         {
             if (event1.type == SDL_QUIT)
-                return 1;
+                exit(1);;
 
-            if (draw_result(renderer,quit,event1,1)==-3) 
+            if (draw_result(renderer,quit,event1,1,1)==-3) 
             {
                 quit = true;
                 return 0;////////выход в меню
@@ -1571,7 +1586,7 @@ int level_menu(SDL_Renderer*& renderer)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) return -1;
+            if (event.type == SDL_QUIT) exit(1);
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
             {
 
@@ -1682,7 +1697,7 @@ int chose_kolvo(SDL_Renderer*& renderer)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) return 1;
+            if (event.type == SDL_QUIT) exit(1);
             if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
             {
 
@@ -1784,6 +1799,7 @@ int special(SDL_Renderer*& renderer)
     //char bad_finalsound[13] = "zvyk.wav";
     char good_finalsound[20] = "good_final.wav";
     char buttonsound[13] = "button.wav";
+    char wallsound[13] = "wall.wav";
     int x, y, x1, y1, r1 = 1, r2 = 1, co, location, flag1, flag_end = 0, wall = 0, func = 0;
     checking tmp{};
     SDL_Rect area = { (SCREEN_WIDTH - AREA_WIDTH) / 2, (SCREEN_HEIGHT - AREA_HEIGHT) / 2, AREA_WIDTH,AREA_HEIGHT };//поле для игры
@@ -1838,7 +1854,7 @@ int special(SDL_Renderer*& renderer)
     {
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) return 1; //закрыть игру
+            if (event.type == SDL_QUIT) exit(1); //закрыть игру
             flag1 = 1;
 
             //нажали на мышь, шарик полетел
@@ -1889,7 +1905,9 @@ int special(SDL_Renderer*& renderer)
 
                     if (x1 >= AREA_WIDTH - first.w + 50 || x1 <= 50)//отскок от стены
                     {
-                        sound(hitsound);
+                        wall++;
+                        if (wall > 1) sound(wallsound);
+                        if (wall <= 1) sound(hitsound);
                         if (location == 1)
                         {
                             x -= r1 * 1000;
@@ -1905,7 +1923,6 @@ int special(SDL_Renderer*& renderer)
                             x += r1 * 1000;
                             y -= r2 * 1000;
                         }
-                        wall++;
                     }
 
                     if (check_down(balls, first) != -10 || y1 < first.w / 2) //долетел до шариков или верха поля
@@ -2236,9 +2253,9 @@ int special(SDL_Renderer*& renderer)
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
-                return 1;
+                exit(1);
 
-            if (draw_result(renderer, quit, event, 2) == -3)
+            if (draw_result(renderer, quit, event, 3,1) == -3)
             {
                 quit = true;
                 return 0;////////выход в меню
@@ -2323,8 +2340,6 @@ int main(int argc, char** argv)
 {
     int x[2];
     x[0] = x[1] = SCREEN_WIDTH / 2;
-
-
     Mix_Init(0);
     Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024);
     int menu_chose = -1;
@@ -2347,7 +2362,7 @@ int main(int argc, char** argv)
 
         while (SDL_PollEvent(&event))
         {
-            if (event.type == SDL_QUIT) return 0;
+            if (event.type == SDL_QUIT) exit(1);
             menu_chose = menu(renderer, event);
             if (menu_chose == 1)
             {
@@ -2357,36 +2372,31 @@ int main(int argc, char** argv)
                 {
                     sound(buttonsound);
                     int res = light(renderer);
-                    if (res == 1) return 0;
+                    if (res == -1) return 0;
                     if (res == 0)  break;
                 }
                 if (level_chose == 2)
                 {
                     sound(buttonsound);
                     int res2 = middle(renderer);
-                    if (res2 == 1) return 0;
+                    if (res2 == -1) return 0;
                     if (res2 == 0)  break;
                 }
                 if (level_chose == 3)
                 {
                     sound(buttonsound);
                     int chose_k = chose_kolvo(renderer);
-                    if (chose_k == 1) return 0;
+                    if (chose_k == -1) return 0;
                     if (chose_k!=-1)
                     {
                         int res3 = special(renderer);
-                        if (res3 == 1) return 0;
+                        if (res3 == -1) return 0;
                         if (res3 == 0)  break;
                     }
-                    
-                    
                 }
-                
                 if (level_chose == 4) { sound(buttonsound); break;}
                 if (level_chose == -1) { sound(buttonsound);return 0; }
             }
-
-
             if (menu_chose == 2) { sound(buttonsound); if (settings(renderer, my_font, x) == -3) return 0; }
             if (menu_chose == 3) sound(buttonsound);
             if (menu_chose == 4) { sound(buttonsound);return 0; }
