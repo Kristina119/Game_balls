@@ -133,7 +133,68 @@
     <ClCompile Include="Source.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Media Include="button.wav" />
+    <Media Include="delete.wav" />
+    <Media Include="expload.wav" />
+    <Media Include="fon.wav" />
+    <Media Include="good_final.wav" />
+    <Media Include="hit.wav" />
+    <Media Include="wall.wav" />
     <Media Include="zvyk.wav" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="1.bmp" />
+    <Image Include="2.bmp" />
+    <Image Include="3.bmp" />
+    <Image Include="33.bmp" />
+    <Image Include="4.bmp" />
+    <Image Include="chose_ball.bmp" />
+    <Image Include="chose_kolvo.bmp" />
+    <Image Include="chose_lines.bmp" />
+    <Image Include="chose_tries.bmp" />
+    <Image Include="dissapear.bmp" />
+    <Image Include="done.bmp" />
+    <Image Include="End.bmp" />
+    <Image Include="exit_menu.bmp" />
+    <Image Include="first_lvl_res.bmp" />
+    <Image Include="light_menu.bmp" />
+    <Image Include="line.bmp" />
+    <Image Include="lvl_res.bmp" />
+    <Image Include="m.bmp" />
+    <Image Include="menu.bmp" />
+    <Image Include="menu_record.bmp" />
+    <Image Include="menu_res.bmp" />
+    <Image Include="middle_menu.bmp" />
+    <Image Include="minus.bmp" />
+    <Image Include="mm.bmp" />
+    <Image Include="new_record.bmp" />
+    <Image Include="new_record2.bmp" />
+    <Image Include="pause.bmp" />
+    <Image Include="plus.bmp" />
+    <Image Include="ray.bmp" />
+    <Image Include="record_menu.bmp" />
+    <Image Include="settings.bmp" />
+    <Image Include="settings_exit.bmp" />
+    <Image Include="settings_menu.bmp" />
+    <Image Include="settings_square_mus.bmp" />
+    <Image Include="settings_square_sound.bmp" />
+    <Image Include="slider.bmp" />
+    <Image Include="sp.bmp" />
+    <Image Include="space.bmp" />
+    <Image Include="space2.bmp" />
+    <Image Include="space3.bmp" />
+    <Image Include="special_menu.bmp" />
+    <Image Include="stars.bmp" />
+    <Image Include="stars1.bmp" />
+    <Image Include="start_menu.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="gogoia-deco.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="record_light.txt" />
+    <Text Include="record_middle.txt" />
+    <Text Include="record_special.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -26,5 +26,168 @@
     <Media Include="zvyk.wav">
       <Filter>Файлы ресурсов</Filter>
     </Media>
+    <Media Include="button.wav">
+      <Filter>Файлы ресурсов</Filter>
+    </Media>
+    <Media Include="delete.wav">
+      <Filter>Файлы ресурсов</Filter>
+    </Media>
+    <Media Include="expload.wav">
+      <Filter>Файлы ресурсов</Filter>
+    </Media>
+    <Media Include="fon.wav">
+      <Filter>Файлы ресурсов</Filter>
+    </Media>
+    <Media Include="good_final.wav">
+      <Filter>Файлы ресурсов</Filter>
+    </Media>
+    <Media Include="hit.wav">
+      <Filter>Файлы ресурсов</Filter>
+    </Media>
+    <Media Include="wall.wav">
+      <Filter>Файлы ресурсов</Filter>
+    </Media>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="1.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="2.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="3.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="4.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="33.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="chose_ball.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="chose_kolvo.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="chose_lines.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="chose_tries.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="dissapear.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="done.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="End.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="exit_menu.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="first_lvl_res.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="light_menu.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="line.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="lvl_res.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="m.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="menu.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="menu_record.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="menu_res.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="middle_menu.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="minus.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="new_record2.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="pause.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="new_record.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="mm.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="plus.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="ray.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="record_menu.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="settings.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="settings_exit.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="settings_menu.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="settings_square_mus.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="settings_square_sound.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="slider.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="sp.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="space.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="space2.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="space3.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="special_menu.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="stars.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="stars1.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+    <Image Include="start_menu.bmp">
+      <Filter>Файлы ресурсов</Filter>
+    </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <Font Include="gogoia-deco.ttf" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="record_light.txt" />
+    <Text Include="record_middle.txt" />
+    <Text Include="record_special.txt" />
   </ItemGroup>
 </Project>
