@@ -4,7 +4,8 @@
 #include <cmath>
 #include <locale>
 #include "SDL_mixer.h"
-#include <iostream>
+#include <string>
+#include <fstream>
 using namespace std;
 const int SCREEN_WIDTH = 1060;
 const int SCREEN_HEIGHT = 800;
@@ -14,6 +15,9 @@ const int AREA_HEIGHT = 700;
 Mix_Music* fon = NULL;
 Mix_Chunk* Sound = NULL;
 int BALL_COUNT=47,tries=3,count_score=0,first_tries=3,lines=0;
+int x_settings[2]={ SCREEN_WIDTH / 2 ,SCREEN_WIDTH / 2 };
+
+
 
 struct Rect
 {
@@ -42,7 +46,7 @@ void loadmusic() {
 SDL_Texture* get_text_texture(SDL_Renderer*& renderer, char* text, TTF_Font* font)
 {
     SDL_Surface* textSurface = NULL;
-    SDL_Color fore_color = { 180,100,55 };
+    SDL_Color fore_color = { 255,255,31 };
     textSurface = TTF_RenderText_Blended(font, text, fore_color);
     SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, textSurface);
     SDL_FreeSurface(textSurface);
@@ -61,9 +65,20 @@ SDL_Texture* get_text_texture_result(SDL_Renderer*& renderer, char* text, TTF_Fo
 
 }
 
-void draw_text(SDL_Renderer*& renderer, SDL_Texture* texture,int var,int x,int y,int h)
+void draw_text(SDL_Renderer*& renderer, SDL_Texture* texture,int var,int x,int y,int h,int dop)
 {
     SDL_Rect rect;
+    if (var == 9)
+    {
+        int k = dop;
+        int len = 0;
+        if (k == 0) len = 1;
+        while (k != 0) {
+            k /= 10;
+            len++;
+        }
+        rect = { x,y,40 * len,h };
+    }
     if (var == 1 || var==3) 
     {
         int k = count_score;
@@ -90,12 +105,13 @@ void draw_text(SDL_Renderer*& renderer, SDL_Texture* texture,int var,int x,int y
         if (var == 2)rect = { SCREEN_WIDTH / 2 - 20 * len - 10,SCREEN_HEIGHT - 50, 20 * len, 50 };
         if (var == 4) rect = { SCREEN_WIDTH / 3*2-70,SCREEN_HEIGHT / 2-64, 20 * len, 89 };
     }
-    if (var == 5 || var==6||var==7)
+    if (var == 5 || var==6||var==7 || var==8)
     {
         int k;
         if (var == 5) k = BALL_COUNT;
         if (var == 6) k = lines;
         if (var == 7) k = tries;
+        if (var == 8) k = count_score;
         int len = 0;
         while (k != 0) {
             k /= 10;
@@ -148,7 +164,7 @@ void draw_balls(SDL_Renderer*& renderer, Rect balls[])
 
 void first_draw(SDL_Renderer*& renderer, SDL_Rect first, SDL_Texture* texture)
 {
-    //cout << "\nFIRST BALL x= "<<first.x<<" y= "<<first.y;
+    //cout << "\nFIRST BALL x_settings= "<<first.x_settings<<" y= "<<first.y;
     SDL_RenderCopy(renderer, texture, NULL, &first);
 }
 
@@ -186,7 +202,7 @@ void delete_ball(Rect balls[], int i)
         balls2[j-1] = balls[j];
         //cout << "  " << j;
     }
-    cout << "\nBALLCOUNT= " << BALL_COUNT;
+    //cout << "\nBALLCOUNT= " << BALL_COUNT;
     BALL_COUNT--;
     free(balls);
     balls = (Rect*)malloc(sizeof(Rect) * BALL_COUNT);
@@ -408,7 +424,7 @@ void DrawCircle(SDL_Renderer* renderer, int x0, int y0, int r) {
     double u = 3.14 / 180 * 0;
     
     for (int j = 0; j < r; j++) {
-        SDL_SetRenderDrawColor(renderer, 255,225,0, 0);
+        SDL_SetRenderDrawColor(renderer, 255, 255, 31, 0);
         int x1 = int(x0 + cos(u) * j);
         int y1 = int(y0 - sin(u) * j);
         for (int i = 1; i <= 360; i++) {
@@ -424,7 +440,7 @@ void DrawCircle(SDL_Renderer* renderer, int x0, int y0, int r) {
     }
 }
 
-int settings(SDL_Renderer* renderer, TTF_Font* my_font, int* x) {
+int settings(SDL_Renderer* renderer, TTF_Font* my_font) {
 
     SDL_Rect menu_rect = { 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
     SDL_Surface* menu = IMG_Load("settings.bmp");
@@ -441,13 +457,13 @@ int settings(SDL_Renderer* renderer, TTF_Font* my_font, int* x) {
     sliders[0] = { SCREEN_WIDTH / 4, square[0].y+ square[0].h/2, SCREEN_WIDTH / 2, 40};
     sliders[1] = { SCREEN_WIDTH / 4, square[1].y + square[1].h / 2, SCREEN_WIDTH / 2, 40 };
 
-    SDL_Rect back = { SCREEN_WIDTH / 4 - 25, square[1].y + square[1].h + square[1].h / 4, SCREEN_WIDTH / 2 + 50, SCREEN_HEIGHT / 10 };
-    
-
-    //создание текстур кнопок
+    SDL_Rect back = { SCREEN_WIDTH / 4 - 25, square[1].y + square[1].h + square[1].h / 4, SCREEN_WIDTH / 2 + 50, SCREEN_HEIGHT / 10 };//выход в меню
     SDL_Surface* backImage = IMG_Load("settings_exit.bmp");
     SDL_Texture* backTexture = SDL_CreateTextureFromSurface(renderer, backImage);
     SDL_FreeSurface(backImage);
+
+    //создание текстур кнопок
+    
 
     SDL_Surface* sliderImage = IMG_Load("line.bmp");
     SDL_Texture* sliderTexture = SDL_CreateTextureFromSurface(renderer, sliderImage);
@@ -471,17 +487,18 @@ int settings(SDL_Renderer* renderer, TTF_Font* my_font, int* x) {
             if (event.type == SDL_QUIT) { quit = true; exit(1); }
             if (event.button.button == SDL_BUTTON_LEFT)
             {
-                for (int i = 0; i < 2; i++) if (is_button_hit(sliders[i], event.button.x, event.button.y)) { x[i] = event.button.x; }
+                for (int i = 0; i < 2; i++) if (is_button_hit(sliders[i], event.button.x, event.button.y)) { x_settings[i] = event.button.x; }
 
                 if (is_button_hit(back, event.button.x, event.button.y)) { sound(buttonsound); quit = true; return 0; }
             }
         }
 
         
-        Mix_VolumeMusic((x[0] - 10 - (SCREEN_WIDTH / 2 - (100 * 10) / 2)) / 8);
-        Mix_Volume(-1, (x[1] - 10 - (SCREEN_WIDTH / 2 - (100 * 10) / 2)) / 8);
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 0);
+        Mix_VolumeMusic((x_settings[0] - 10 - (SCREEN_WIDTH / 2 - (100 * 10) / 2)) / 8);
+        Mix_Volume(-1, (x_settings[1] - 10 - (SCREEN_WIDTH / 2 - (100 * 10) / 2)) / 8);
+        
         SDL_RenderClear(renderer);
+        SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
         SDL_RenderCopy(renderer, menuTexture, NULL, &menu_rect);
 
         SDL_RenderCopy(renderer, squareTexture1, NULL, &square[0]);
@@ -489,8 +506,8 @@ int settings(SDL_Renderer* renderer, TTF_Font* my_font, int* x) {
 
         SDL_RenderCopy(renderer, sliderTexture, NULL, &sliders[0]);
         SDL_RenderCopy(renderer, sliderTexture, NULL, &sliders[1]);
-        DrawCircle(renderer, x[0], sliders[0].y+20, 20);
-        DrawCircle(renderer, x[1], sliders[1].y+20, 20);
+        DrawCircle(renderer, x_settings[0], sliders[0].y+20, 20);
+        DrawCircle(renderer, x_settings[1], sliders[1].y+20, 20);
         SDL_RenderCopy(renderer, backTexture, NULL, &back);
         SDL_RenderPresent(renderer);
     }
@@ -517,6 +534,13 @@ int middle(SDL_Renderer*& renderer)
     SDL_Texture* background = SDL_CreateTextureFromSurface(renderer, background_image);
     SDL_FreeSurface(background_image);
     SDL_Rect back_rect = { area.x,area.y,area.w,area.h };
+
+    SDL_Rect settings_lvl = { SCREEN_WIDTH - 45,5,45 , 45 };
+    SDL_Surface* settings_lvl_image = IMG_Load("pause.bmp");
+    SDL_SetColorKey(settings_lvl_image, SDL_TRUE, SDL_MapRGB(settings_lvl_image->format, 255, 255, 255));
+    SDL_Texture* settings_lvl_texture = SDL_CreateTextureFromSurface(renderer, settings_lvl_image);
+    SDL_FreeSurface(settings_lvl_image);
+    SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);//пауза
 
     Rect* balls = (Rect*)malloc(BALL_COUNT * sizeof(Rect));//все шары
     init_balls(balls,2);
@@ -566,15 +590,20 @@ int middle(SDL_Renderer*& renderer)
         {
             if (event.type == SDL_QUIT) exit(1); //закрыть игру
             flag1 = 1;
-
+            if (event.type == SDL_MOUSEBUTTONDOWN &&
+                event.button.button == SDL_BUTTON_LEFT && is_button_hit(settings_lvl, event.button.x, event.button.y))
+            {
+                settings(renderer, my_font); continue;
+            }
             //нажали на мышь, шарик полетел
             if (event.type == SDL_MOUSEBUTTONDOWN &&
                 event.button.button == SDL_BUTTON_LEFT)
             {
+                
                 wall = 0;
                 SDL_GetMouseState(&x, &y);
                 if (x > AREA_WIDTH + 50 || x<50 || y>AREA_HEIGHT || y < 50) break;
-                //dir = { x,y };
+                //dir = { x_settings,y };
                 if (flag1 == 1)x1 = first.x + first.w / 2; y1 = first.y + first.w / 2;
                 if (flag1 != 1) x1 = first.x; y1 = first.y;
                 flag1 = 2; flag_end = -10;
@@ -586,7 +615,7 @@ int middle(SDL_Renderer*& renderer)
 
                 if (x < first.x) { x += first.w / 2; y += first.w / 2; x -= r1 * 1000;y -= r2 * 1000; location = -1; }
                 else { x -= first.w / 2;y += first.w / 2; x += r1 * 1000;y -= r2 * 1000;location = 1; }
-                //int len_x = sqrt((x1 - x) * (x1 - x) + (y1 - y) * (y1 - y));
+                //int len_x = sqrt((x1 - x_settings) * (x1 - x_settings) + (y1 - y) * (y1 - y));
 
                 do { //летит в заданном направлении 
                     x1 = first.x; y1 = first.y;
@@ -604,12 +633,13 @@ int middle(SDL_Renderer*& renderer)
                     first.x = x1;first.y = y1;
                     SDL_RenderClear(renderer);
                     SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                    SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                     draw_balls(renderer, balls);
                     first_draw(renderer, first, ballTexture1);
                     textTexture = get_text_texture(renderer, text, my_font);
-                    draw_text(renderer, textTexture, 1,0,0,0);
+                    draw_text(renderer, textTexture, 1,0,0,0,0);
                     textTexture2 = get_text_texture(renderer, text2, my_font);
-                    draw_text(renderer, textTexture2, 2,0,0,0);
+                    draw_text(renderer, textTexture2, 2,0,0,0, 0);
                     SDL_RenderPresent(renderer);
                     if (check_down(balls, first) == -10 && flag_draw_delay == 0) SDL_Delay(10);
 
@@ -643,7 +673,7 @@ int middle(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2,0,0,0);
+                        draw_text(renderer, textTexture2, 2,0,0,0, 0);
 
                         int nom = check_down(balls, first);
                         bool f = 0, f2 = 0;
@@ -734,7 +764,7 @@ int middle(SDL_Renderer*& renderer)
                         SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                         SDL_RenderClear(renderer);
                         SDL_RenderCopy(renderer, background, NULL, &back_rect);
-
+                        SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
 
                         func = 0;
 
@@ -742,11 +772,11 @@ int middle(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture);
                         _itoa_s(count_score, text, 10);
                         textTexture = get_text_texture(renderer, text, my_font);
-                        draw_text(renderer, textTexture, 1, 0, 0, 0);
+                        draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                         SDL_RenderPresent(renderer);
                         SDL_Delay(10);
@@ -754,6 +784,7 @@ int middle(SDL_Renderer*& renderer)
                         SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                         SDL_RenderClear(renderer);
                         SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                        SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                         check_colors(balls, balls[BALL_COUNT - 1], func, BALL_COUNT - 1, tmp);
                         if (func == 1) count_score--;
 
@@ -764,12 +795,12 @@ int middle(SDL_Renderer*& renderer)
                         //sound(hitsound);
                         _itoa_s(count_score, text, 10);
                         textTexture = get_text_texture(renderer, text, my_font);
-                        draw_text(renderer, textTexture, 1, 0, 0, 0);
+                        draw_text(renderer, textTexture, 1, 0, 0, 0,0);
 
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                         //if (balls[BALL_COUNT - 1].ball.y >= AREA_HEIGHT + 50 - 120) { level_quit = true; flag_end = 1; }
                         for (int i = 0;i < BALL_COUNT;i++)
@@ -785,7 +816,7 @@ int middle(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
                         first = { area.w / 2 - 60 + 50,area.h - 60 + 50,60,60 };
                         first_color++;
                         if (first_color == 5) first_color = 1;//////////////////////////////
@@ -840,18 +871,19 @@ int middle(SDL_Renderer*& renderer)
                                 SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                                 SDL_RenderClear(renderer);
                                 SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                                SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                                 draw_balls(renderer, balls);
                                 first_draw(renderer, first, ballTexture1);
                                 SDL_DestroyTexture(textTexture);
                                 //sound(hitsound);
                                 _itoa_s(count_score, text, 10);
                                 textTexture = get_text_texture(renderer, text, my_font);
-                                draw_text(renderer, textTexture, 1, 0, 0, 0);
+                                draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
 
                                 SDL_DestroyTexture(textTexture2);
                                 _itoa_s(tries, text2, 10);
                                 textTexture2 = get_text_texture(renderer, text2, my_font);
-                                draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                                draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
                                 
                             }
                         }
@@ -927,6 +959,7 @@ int middle(SDL_Renderer*& renderer)
                             SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                             SDL_RenderClear(renderer);
                             SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                            SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                             draw_balls(renderer, balls);
                             first_draw(renderer, first, ballTexture1);
                             times = 0;
@@ -940,16 +973,17 @@ int middle(SDL_Renderer*& renderer)
             SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
             SDL_RenderClear(renderer);
             SDL_RenderCopy(renderer, background, NULL, &back_rect);
+            SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
             first_draw(renderer, first, ballTexture1);
             draw_balls(renderer, balls);
             SDL_DestroyTexture(textTexture);
             _itoa_s(count_score, text, 10);
             textTexture = get_text_texture(renderer, text, my_font);
-            draw_text(renderer, textTexture, 1, 0, 0, 0);
+            draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
             SDL_DestroyTexture(textTexture2);
             _itoa_s(tries, text2, 10);
             textTexture2 = get_text_texture(renderer, text2, my_font);
-            draw_text(renderer, textTexture2, 2, 0, 0, 0);
+            draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
             SDL_RenderPresent(renderer);
 
             for (int i = 0;i < BALL_COUNT;i++)
@@ -996,26 +1030,91 @@ int light(SDL_Renderer*& renderer);
 int special(SDL_Renderer*& renderer);
 int chose_kolvo(SDL_Renderer*& renderer);
 
-int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level,int type)
+int draw_result(SDL_Renderer*& renderer, bool quit, SDL_Event event, int level, int type)
 {
+    char light_record[4], middle_record[4], special_record[4];
+    int light_record_file, middle_record_file, special_record_file;
+    bool f_l = 0, f_m = 0, f_s = 0;
+
+    if (level == 1)
+    {
+        ifstream light_rec("record_light.txt");
+        light_rec.getline(light_record, 256);
+        light_record_file = atoi(light_record);
+        light_rec.close();
+        if (light_record_file < count_score) 
+        {
+            ofstream light_rec2("record_light.txt");
+            light_rec2 << count_score; f_l = 1;
+            light_rec2.close();
+        }
+    }
+
+    if (level == 2)
+    {
+        ifstream middle_rec("record_middle.txt");
+        middle_rec.getline(middle_record, 256);
+        middle_record_file = atoi(middle_record);
+        middle_rec.close();
+        if (middle_record_file < count_score)
+        {
+            ofstream middle_rec2("record_middle.txt");
+            middle_rec2<< count_score; f_m = 1;
+            middle_rec2.close();
+        }
+    }
+
+    if (level == 3)
+    {
+        ifstream special_rec("record_special.txt");
+        special_rec.getline(special_record, 256);
+        special_record_file = atoi(special_record);
+        special_rec.close();
+        if (special_record_file < count_score) 
+        { 
+            ofstream special_rec2("record_special.txt");
+            special_rec2 << count_score; f_s = 1;
+            special_rec2.close();
+        }
+    }
+    
     //текстуры кнопок и результатов
-    char text2[10], text[10],buttonsound[15]="button.wav";
+    SDL_RenderClear(renderer);
+    TTF_Font* my_font = TTF_OpenFont("gogoia-deco.ttf", 100);
+    char text2[10], text[10], buttonsound[15] = "button.wav";
     SDL_Rect result_rect = { 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
     SDL_Surface* end = IMG_Load("End.bmp");
     //SDL_SetColorKey(end, SDL_TRUE, SDL_MapRGB(end->format, 255, 255, 255));
     SDL_Texture* endTexture = SDL_CreateTextureFromSurface(renderer, end);
     SDL_FreeSurface(end);
     SDL_RenderCopy(renderer, endTexture, NULL, &result_rect);
+    
     int rasn = first_tries - tries;
     _itoa_s(count_score, text, 10);
     _itoa_s(rasn, text2, 10);
 
-    TTF_Font* my_font = TTF_OpenFont("gogoia-deco.ttf", 100);
+    
     SDL_Texture* textTexture = get_text_texture_result(renderer, text, my_font);
     SDL_Texture* textTexture2 = get_text_texture_result(renderer, text2, my_font);
     //draw_message(renderer, textTexture, mush_counter);
-    draw_text(renderer, textTexture, 3, 0, 0, 0);
-    draw_text(renderer, textTexture2, 4, 0, 0, 0);
+    draw_text(renderer, textTexture, 3, 0, 0, 0, 0);
+    draw_text(renderer, textTexture2, 4, 0, 0, 0, 0);
+
+    SDL_Rect new_record = { SCREEN_WIDTH / 4.5, SCREEN_HEIGHT / 7.5 * 1.8,SCREEN_WIDTH / 1.7 , SCREEN_WIDTH / 1.8 / 6 };
+    SDL_Surface* new_record_image = IMG_Load("new_record2.bmp");
+    SDL_Texture* new_record_texture = SDL_CreateTextureFromSurface(renderer, new_record_image);
+    SDL_FreeSurface(new_record_image);
+
+    char text_record[10];
+    _itoa_s(count_score, text_record, 10);
+    SDL_Texture* textTexture5 = get_text_texture_result(renderer, text_record, my_font);
+    int x = new_record.x + new_record.w - 185, y = SCREEN_HEIGHT / 7.5 * 1.5 + 35, h = SCREEN_WIDTH / 1.8 / 5.8;
+    if (f_l == 1 || f_m == 1 || f_s == 1)
+    {
+        SDL_RenderCopy(renderer, new_record_texture, NULL, &new_record);
+        draw_text(renderer, textTexture5, 8, x,y,h,0);
+
+    }
 
     SDL_Rect menu_res = { SCREEN_WIDTH / 8, SCREEN_HEIGHT - 1.5 * 235 / 2, 235, 235 / 2 };
     SDL_Surface* menu_res_image = IMG_Load("menu_res.bmp");
@@ -1030,28 +1129,47 @@ int draw_result(SDL_Renderer*& renderer,bool quit, SDL_Event event,int level,int
     SDL_Texture* lvl_res_texture = SDL_CreateTextureFromSurface(renderer, lvl_res_image);
     SDL_FreeSurface(lvl_res_image);
     SDL_RenderCopy(renderer, lvl_res_texture, NULL, &lvl_res);
-
     SDL_RenderPresent(renderer);
 
-    if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
-    {
-
-        if (is_button_hit(menu_res, event.button.x, event.button.y))
+  
+        if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
         {
-            SDL_DestroyTexture(textTexture);
-            SDL_DestroyTexture(textTexture2);
-            TTF_CloseFont(my_font);
-            quit = true;
-            sound(buttonsound);
-            return -3;////////выход в меню
-        }
-        if (is_button_hit(lvl_res, event.button.x, event.button.y))
-        {
-            if (level == 1) { sound(buttonsound); if(middle(renderer)==-1) return-1; }
-            if (level == 2) { sound(buttonsound); if (chose_kolvo(renderer) == -1) return -1; special(renderer); }
-            if (level == 3) { sound(buttonsound); if (light(renderer) == -1) return -1; }
-        }
-         //переход на следующий уровень
+            if (is_button_hit(menu_res, event.button.x, event.button.y))
+            {
+                SDL_DestroyTexture(textTexture);
+                SDL_DestroyTexture(textTexture2);
+                TTF_CloseFont(my_font);
+                quit = true;
+                sound(buttonsound);
+                return -3;////////выход в меню
+            }
+            if (is_button_hit(lvl_res, event.button.x, event.button.y))
+            {
+                if (level == 1)
+                {
+                    sound(buttonsound);
+                    int var1 = middle(renderer);
+                    if (var1 == 0) return -3;
+                    if (var1 == -3) return-3;
+                }
+                if (level == 2)
+                {
+                    sound(buttonsound);
+                    if (chose_kolvo(renderer) == -1) return -1;
+                    int var2 = special(renderer);
+                    if (var2 == 0) return -3;
+                    if (var2 == -3) return-3;
+                }
+                if (level == 3)
+                {
+                    sound(buttonsound);
+                    int var3 = light(renderer);
+                    if (var3 == 0) return -3;
+                    if (var3 == -3) return-3;
+                }
+            }
+            //переход на следующий уровень
+        
     }
 }
 
@@ -1060,12 +1178,11 @@ int light(SDL_Renderer*& renderer)
     int x, y,x1,y1,r1=1,r2=1,co,location,flag1,flag_end=0,wall=0,func=0;
     BALL_COUNT = 47+16+15;
     tries = 40;first_tries = 40;
+    
     count_score = 0;
     char hitsound[13] = "hit.wav";
     char delsound[13] = "delete.wav";
-    char explodesound[13] = "expload.wav";
     char wallsound[13] = "wall.wav";
-    //char bad_finalsound[13] = "zvyk.wav";
     char good_finalsound[20] = "good_final.wav";
     char buttonsound[13] = "button.wav";
     checking tmp{};
@@ -1075,7 +1192,12 @@ int light(SDL_Renderer*& renderer)
     SDL_FreeSurface(background_image);
     SDL_Rect back_rect = {area.x,area.y,area.w,area.h};
     
-
+    SDL_Rect settings_lvl = { SCREEN_WIDTH -45,5,45 , 45 };
+    SDL_Surface* settings_lvl_image = IMG_Load("pause.bmp");
+    SDL_SetColorKey(settings_lvl_image, SDL_TRUE, SDL_MapRGB(settings_lvl_image->format, 255, 255, 255));
+    SDL_Texture* settings_lvl_texture = SDL_CreateTextureFromSurface(renderer, settings_lvl_image);
+    SDL_FreeSurface(settings_lvl_image);
+    SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);//пауза
 
 
     Rect* balls = (Rect*)malloc(BALL_COUNT * sizeof(Rect));//все шары
@@ -1136,14 +1258,21 @@ int light(SDL_Renderer*& renderer)
             if (event.type == SDL_QUIT) exit(1);; //закрыть игру
             flag1 = 1;
 
+            if (event.type == SDL_MOUSEBUTTONDOWN &&
+                event.button.button == SDL_BUTTON_LEFT && is_button_hit(settings_lvl, event.button.x, event.button.y))
+            {
+                settings(renderer, my_font); continue;
+            }
+
             //нажали на мышь, шарик полетел
             if (event.type == SDL_MOUSEBUTTONDOWN &&
                 event.button.button == SDL_BUTTON_LEFT)
             {
+
                 wall = 0;
                 SDL_GetMouseState(&x, &y);
                 if (x > AREA_WIDTH + 50 || x<50 || y>AREA_HEIGHT || y < 50) break;
-                //dir = { x,y };
+                //dir = { x_settings,y };
                 if (flag1 == 1)x1 = first.x + first.w / 2; y1 = first.y + first.w / 2;
                 if (flag1 != 1) x1 = first.x; y1 = first.y;
                 flag1 = 2; flag_end = -10;
@@ -1155,7 +1284,7 @@ int light(SDL_Renderer*& renderer)
 
                 if (x < first.x) { x += first.w / 2; y += first.w / 2; x -= r1 * 1000;y -= r2 * 1000; location = -1; }
                 else { x -= first.w / 2;y += first.w / 2; x += r1 * 1000;y -= r2 * 1000;location = 1; }
-                //int len_x = sqrt((x1 - x) * (x1 - x) + (y1 - y) * (y1 - y));
+                //int len_x = sqrt((x1 - x_settings) * (x1 - x_settings) + (y1 - y) * (y1 - y));
 
                 do { //летит в заданном направлении 
                     x1 = first.x; y1 = first.y;
@@ -1176,9 +1305,10 @@ int light(SDL_Renderer*& renderer)
                     draw_balls(renderer, balls);
                     first_draw(renderer, first, ballTexture1);
                     textTexture = get_text_texture(renderer, text, my_font);
-                    draw_text(renderer, textTexture, 1, 0, 0, 0);
+                    draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
                     textTexture2 = get_text_texture(renderer, text2, my_font);
-                    draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                    draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
+                    SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                     SDL_RenderPresent(renderer);
                     if (check_down(balls, first) == -10 && flag_draw_delay == 0) SDL_Delay(10);
 
@@ -1212,7 +1342,7 @@ int light(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                         int nom = check_down(balls, first);
                         bool f = 0, f2 = 0;
@@ -1304,7 +1434,7 @@ int light(SDL_Renderer*& renderer)
                         SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                         SDL_RenderClear(renderer);
                         SDL_RenderCopy(renderer, background, NULL, &back_rect);
-
+                        SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
 
                         func = 0;
 
@@ -1312,11 +1442,11 @@ int light(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture);
                         _itoa_s(count_score, text, 10);
                         textTexture = get_text_texture(renderer, text, my_font);
-                        draw_text(renderer, textTexture, 1, 0, 0, 0);
+                        draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                         SDL_RenderPresent(renderer);
                         SDL_Delay(10);
@@ -1324,6 +1454,7 @@ int light(SDL_Renderer*& renderer)
                         SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                         SDL_RenderClear(renderer);
                         SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                        SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                         check_colors(balls, balls[BALL_COUNT - 1], func, BALL_COUNT - 1, tmp);
                         if (func == 1) count_score--;
 
@@ -1334,12 +1465,12 @@ int light(SDL_Renderer*& renderer)
                         //sound(hitsound);
                         _itoa_s(count_score, text, 10);
                         textTexture = get_text_texture(renderer, text, my_font);
-                        draw_text(renderer, textTexture, 1, 0, 0, 0);
+                        draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
 
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                         if (balls[BALL_COUNT - 1].ball.y >= AREA_HEIGHT + 50 - 120) { level_quit = true; flag_end = 1; }
 
@@ -1351,7 +1482,7 @@ int light(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
                         first = { area.w / 2 - 60 + 50,area.h - 60 + 50,60,60 };
                         first_color++;
                         if (first_color == 5) first_color = 1;
@@ -1408,18 +1539,19 @@ int light(SDL_Renderer*& renderer)
                                 SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                                 SDL_RenderClear(renderer);
                                 SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                                SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                                 draw_balls(renderer, balls);
                                 first_draw(renderer, first, ballTexture1);
                                 SDL_DestroyTexture(textTexture);
                                 //sound(hitsound);
                                 _itoa_s(count_score, text, 10);
                                 textTexture = get_text_texture(renderer, text, my_font);
-                                draw_text(renderer, textTexture, 1, 0, 0, 0);
+                                draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
 
                                 SDL_DestroyTexture(textTexture2);
                                 _itoa_s(tries, text2, 10);
                                 textTexture2 = get_text_texture(renderer, text2, my_font);
-                                draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                                draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
                                 //SDL_RenderPresent(renderer);
                                 //continue;
                             }
@@ -1437,15 +1569,16 @@ int light(SDL_Renderer*& renderer)
             SDL_RenderClear(renderer);
             SDL_RenderCopy(renderer, background, NULL, &back_rect);
             first_draw(renderer, first, ballTexture1);
+            SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
             draw_balls(renderer, balls);
             SDL_DestroyTexture(textTexture);
             _itoa_s(count_score, text, 10);
             textTexture = get_text_texture(renderer, text, my_font);
-            draw_text(renderer, textTexture, 1, 0, 0, 0);
+            draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
             SDL_DestroyTexture(textTexture2);
             _itoa_s(tries, text2, 10);
             textTexture2 = get_text_texture(renderer, text2, my_font);
-            draw_text(renderer, textTexture2, 2, 0, 0, 0);
+            draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
             SDL_RenderPresent(renderer);
             //}////////////////pole ivent
 
@@ -1475,59 +1608,6 @@ int light(SDL_Renderer*& renderer)
                 quit = true;
                 return 0;////////выход в меню
             }
-           /* //текстуры кнопок и результатов
-                SDL_Rect result_rect = { 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
-                SDL_Surface* end = IMG_Load("End.bmp");
-                //SDL_SetColorKey(end, SDL_TRUE, SDL_MapRGB(end->format, 255, 255, 255));
-                SDL_Texture* endTexture = SDL_CreateTextureFromSurface(renderer, end);
-                SDL_FreeSurface(end);
-                SDL_RenderCopy(renderer, endTexture, NULL, &result_rect);
-                int rasn = first_tries - tries;
-                _itoa_s(count_score, text, 10);
-                _itoa_s(rasn, text2, 10);
-
-                SDL_DestroyTexture(textTexture);
-                SDL_DestroyTexture(textTexture2);
-                textTexture = get_text_texture_result(renderer, text, my_font);
-                textTexture2 = get_text_texture_result(renderer, text2, my_font);
-                //draw_message(renderer, textTexture, mush_counter);
-                draw_text(renderer, textTexture, 3);
-                draw_text(renderer, textTexture2, 4);
-
-                SDL_Rect menu_res = { SCREEN_WIDTH / 8, SCREEN_HEIGHT - 1.5 * 235 / 2, 235, 235 / 2 };
-                SDL_Surface* menu_res_image = IMG_Load("menu_res.bmp");
-                SDL_Texture* menu_res_texture = SDL_CreateTextureFromSurface(renderer, menu_res_image);
-                SDL_FreeSurface(menu_res_image);
-                SDL_RenderCopy(renderer, menu_res_texture, NULL, &menu_res);
-
-                SDL_Rect lvl_res = { SCREEN_WIDTH / 8 + menu_res.w * 2.4, SCREEN_HEIGHT - 1.5 * 235 / 2, 235, 235 / 2 };
-                SDL_Surface* lvl_res_image = IMG_Load("lvl_res.bmp");
-                SDL_Texture* lvl_res_texture = SDL_CreateTextureFromSurface(renderer, lvl_res_image);
-                SDL_FreeSurface(lvl_res_image);
-                SDL_RenderCopy(renderer, lvl_res_texture, NULL, &lvl_res);
-            
-            SDL_RenderPresent(renderer);
-            
-            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
-            {
-
-                if (is_button_hit(menu_res, event.button.x, event.button.y))
-                {
-                    SDL_DestroyTexture(ballTexture1);
-                    for (int i = 0;i < BALL_COUNT;i++)
-                    {
-                        SDL_DestroyTexture(balls[i].ballTexture);
-                    }
-                    SDL_DestroyTexture(textTexture);
-                    SDL_DestroyTexture(textTexture2);
-                    SDL_DestroyTexture(ballTexture1);
-                    TTF_CloseFont(my_font);
-                    TTF_Quit();
-                    quit = true;
-                    return 1;////////выход в меню
-                }
-                if (is_button_hit(lvl_res, event.button.x, event.button.y)) return -1;//middle(renderer);////////переход на следующий уровень
-            }*/
         }
 
     }
@@ -1688,9 +1768,9 @@ int chose_kolvo(SDL_Renderer*& renderer)
     _itoa_s(tries, text_tries, 10);
     SDL_Texture* textTexture_tries = get_text_texture(renderer, text_tries, my_font);
 
-    draw_text(renderer, textTexture_tries, 7, chose_tries.x + chose_tries.w * 1.3, chose_tries.y, chose_tries.h);
-    draw_text(renderer, textTexture_lines, 6, chose_lines.x + chose_lines.w * 1.3, chose_lines.y, chose_lines.h);
-    draw_text(renderer, textTexture_ball, 5, chose_ball.x + chose_ball.w * 1.3, chose_ball.y, chose_ball.h);
+    draw_text(renderer, textTexture_tries, 7, chose_tries.x + chose_tries.w * 1.3, chose_tries.y, chose_tries.h, 0);
+    draw_text(renderer, textTexture_lines, 6, chose_lines.x + chose_lines.w * 1.3, chose_lines.y, chose_lines.h, 0);
+    draw_text(renderer, textTexture_ball, 5, chose_ball.x + chose_ball.w * 1.3, chose_ball.y, chose_ball.h, 0);
     SDL_RenderPresent(renderer);
     SDL_Event event;
     while (flag == false)
@@ -1776,9 +1856,9 @@ int chose_kolvo(SDL_Renderer*& renderer)
                 }
 
 
-                draw_text(renderer, textTexture_tries, 7, chose_tries.x + chose_tries.w * 1.3, chose_tries.y, chose_tries.h);
-                draw_text(renderer, textTexture_lines, 6, chose_lines.x + chose_lines.w * 1.3, chose_lines.y, chose_lines.h);
-                draw_text(renderer, textTexture_ball, 5, chose_ball.x + chose_ball.w * 1.3, chose_ball.y, chose_ball.h);
+                draw_text(renderer, textTexture_tries, 7, chose_tries.x + chose_tries.w * 1.3, chose_tries.y, chose_tries.h, 0);
+                draw_text(renderer, textTexture_lines, 6, chose_lines.x + chose_lines.w * 1.3, chose_lines.y, chose_lines.h, 0);
+                draw_text(renderer, textTexture_ball, 5, chose_ball.x + chose_ball.w * 1.3, chose_ball.y, chose_ball.h, 0);
                 SDL_RenderPresent(renderer);
                 if (is_button_hit(done, event.button.x, event.button.y) == 1) flag = true;
 
@@ -1807,6 +1887,12 @@ int special(SDL_Renderer*& renderer)
     SDL_Texture* background = SDL_CreateTextureFromSurface(renderer, background_image);
     SDL_FreeSurface(background_image);
     SDL_Rect back_rect = { area.x,area.y,area.w,area.h };
+
+    SDL_Rect settings_lvl = { SCREEN_WIDTH - 45,5,45 , 45 };
+    SDL_Surface* settings_lvl_image = IMG_Load("pause.bmp");
+    SDL_SetColorKey(settings_lvl_image, SDL_TRUE, SDL_MapRGB(settings_lvl_image->format, 255, 255, 255));
+    SDL_Texture* settings_lvl_texture = SDL_CreateTextureFromSurface(renderer, settings_lvl_image);
+    SDL_FreeSurface(settings_lvl_image);
 
     Rect* balls = (Rect*)malloc(BALL_COUNT * sizeof(Rect));//все шары
     init_balls(balls, 2);
@@ -1856,7 +1942,11 @@ int special(SDL_Renderer*& renderer)
         {
             if (event.type == SDL_QUIT) exit(1); //закрыть игру
             flag1 = 1;
-
+            if (event.type == SDL_MOUSEBUTTONDOWN &&
+                event.button.button == SDL_BUTTON_LEFT && is_button_hit(settings_lvl, event.button.x, event.button.y))
+            {
+                settings(renderer, my_font); continue;
+            }
             //нажали на мышь, шарик полетел
             if (event.type == SDL_MOUSEBUTTONDOWN &&
                 event.button.button == SDL_BUTTON_LEFT)
@@ -1864,7 +1954,7 @@ int special(SDL_Renderer*& renderer)
                 wall = 0;
                 SDL_GetMouseState(&x, &y);
                 if (x > AREA_WIDTH + 50 || x<50 || y>AREA_HEIGHT || y < 50) break;
-                //dir = { x,y };
+                //dir = { x_settings,y };
                 if (flag1 == 1)x1 = first.x + first.w / 2; y1 = first.y + first.w / 2;
                 if (flag1 != 1) x1 = first.x; y1 = first.y;
                 flag1 = 2; flag_end = -10;
@@ -1876,7 +1966,7 @@ int special(SDL_Renderer*& renderer)
 
                 if (x < first.x) { x += first.w / 2; y += first.w / 2; x -= r1 * 1000;y -= r2 * 1000; location = -1; }
                 else { x -= first.w / 2;y += first.w / 2; x += r1 * 1000;y -= r2 * 1000;location = 1; }
-                //int len_x = sqrt((x1 - x) * (x1 - x) + (y1 - y) * (y1 - y));
+                //int len_x = sqrt((x1 - x_settings) * (x1 - x_settings) + (y1 - y) * (y1 - y));
 
                 do { //летит в заданном направлении 
                     x1 = first.x; y1 = first.y;
@@ -1894,12 +1984,13 @@ int special(SDL_Renderer*& renderer)
                     first.x = x1;first.y = y1;
                     SDL_RenderClear(renderer);
                     SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                    SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                     draw_balls(renderer, balls);
                     first_draw(renderer, first, ballTexture1);
                     textTexture = get_text_texture(renderer, text, my_font);
-                    draw_text(renderer, textTexture, 1, 0, 0, 0);
+                    draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
                     textTexture2 = get_text_texture(renderer, text2, my_font);
-                    draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                    draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
                     SDL_RenderPresent(renderer);
                     if (check_down(balls, first) == -10 && flag_draw_delay == 0) SDL_Delay(10);
 
@@ -1932,7 +2023,7 @@ int special(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                         int nom = check_down(balls, first);
                         bool f = 0, f2 = 0;
@@ -2023,7 +2114,7 @@ int special(SDL_Renderer*& renderer)
                         SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                         SDL_RenderClear(renderer);
                         SDL_RenderCopy(renderer, background, NULL, &back_rect);
-
+                        SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
 
                         func = 0;
 
@@ -2031,11 +2122,11 @@ int special(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture);
                         _itoa_s(count_score, text, 10);
                         textTexture = get_text_texture(renderer, text, my_font);
-                        draw_text(renderer, textTexture, 1, 0, 0, 0);
+                        draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                         SDL_RenderPresent(renderer);
                         SDL_Delay(10);
@@ -2043,6 +2134,7 @@ int special(SDL_Renderer*& renderer)
                         SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                         SDL_RenderClear(renderer);
                         SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                        SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                         check_colors(balls, balls[BALL_COUNT - 1], func, BALL_COUNT - 1, tmp);
                         if (func == 1) count_score--;
 
@@ -2053,12 +2145,12 @@ int special(SDL_Renderer*& renderer)
                         //sound(hitsound);
                         _itoa_s(count_score, text, 10);
                         textTexture = get_text_texture(renderer, text, my_font);
-                        draw_text(renderer, textTexture, 1, 0, 0, 0);
+                        draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
 
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                         //if (balls[BALL_COUNT - 1].ball.y >= AREA_HEIGHT + 50 - 120) { level_quit = true; flag_end = 1; }
                         for (int i = 0;i < BALL_COUNT;i++)
@@ -2074,7 +2166,7 @@ int special(SDL_Renderer*& renderer)
                         SDL_DestroyTexture(textTexture2);
                         _itoa_s(tries, text2, 10);
                         textTexture2 = get_text_texture(renderer, text2, my_font);
-                        draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                        draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
                         first = { area.w / 2 - 60 + 50,area.h - 60 + 50,60,60 };
                         first_color++;
                         if (first_color == 5) first_color = 1;//////////////////////////////
@@ -2129,18 +2221,19 @@ int special(SDL_Renderer*& renderer)
                                 SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                                 SDL_RenderClear(renderer);
                                 SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                                SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                                 draw_balls(renderer, balls);
                                 first_draw(renderer, first, ballTexture1);
                                 SDL_DestroyTexture(textTexture);
                                 //sound(hitsound);
                                 _itoa_s(count_score, text, 10);
                                 textTexture = get_text_texture(renderer, text, my_font);
-                                draw_text(renderer, textTexture, 1, 0, 0, 0);
+                                draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
 
                                 SDL_DestroyTexture(textTexture2);
                                 _itoa_s(tries, text2, 10);
                                 textTexture2 = get_text_texture(renderer, text2, my_font);
-                                draw_text(renderer, textTexture2, 2, 0, 0, 0);
+                                draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
 
                             }
                         }
@@ -2213,6 +2306,7 @@ int special(SDL_Renderer*& renderer)
                             SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
                             SDL_RenderClear(renderer);
                             SDL_RenderCopy(renderer, background, NULL, &back_rect);
+                            SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
                             draw_balls(renderer, balls);
                             first_draw(renderer, first, ballTexture1);
                         }
@@ -2225,16 +2319,17 @@ int special(SDL_Renderer*& renderer)
             SDL_SetRenderDrawColor(renderer, 0, 21, 36, 0);
             SDL_RenderClear(renderer);
             SDL_RenderCopy(renderer, background, NULL, &back_rect);
+            SDL_RenderCopy(renderer, settings_lvl_texture, NULL, &settings_lvl);
             first_draw(renderer, first, ballTexture1);
             draw_balls(renderer, balls);
             SDL_DestroyTexture(textTexture);
             _itoa_s(count_score, text, 10);
             textTexture = get_text_texture(renderer, text, my_font);
-            draw_text(renderer, textTexture, 1, 0, 0, 0);
+            draw_text(renderer, textTexture, 1, 0, 0, 0, 0);
             SDL_DestroyTexture(textTexture2);
             _itoa_s(tries, text2, 10);
             textTexture2 = get_text_texture(renderer, text2, my_font);
-            draw_text(renderer, textTexture2, 2, 0, 0, 0);
+            draw_text(renderer, textTexture2, 2, 0, 0, 0, 0);
             SDL_RenderPresent(renderer);
 
             for (int i = 0;i < BALL_COUNT;i++)
@@ -2255,7 +2350,7 @@ int special(SDL_Renderer*& renderer)
             if (event.type == SDL_QUIT)
                 exit(1);
 
-            if (draw_result(renderer, quit, event, 3,1) == -3)
+            if (draw_result(renderer, quit, event, 3,2) == -3)
             {
                 quit = true;
                 return 0;////////выход в меню
@@ -2275,6 +2370,72 @@ int special(SDL_Renderer*& renderer)
     TTF_Quit();
 
     return 1;
+}
+
+void record_window(SDL_Renderer*& renderer)
+{
+    TTF_Font* my_font = TTF_OpenFont("gogoia-deco.ttf", 100);
+    char light_record[4], middle_record[4], special_record[4], text1[10], text2[10], text3[10], buttonsound[15] = "button.wav";
+    int light_record_file, middle_record_file, special_record_file;
+
+    ifstream light_rec("record_light.txt");
+    light_rec.getline(light_record, 256);
+    light_record_file = atoi(light_record);
+    light_rec.close();
+
+    ifstream middle_rec("record_middle.txt");
+    middle_rec.getline(middle_record, 256);
+    middle_record_file = atoi(middle_record);
+    middle_rec.close();
+
+    ifstream special_rec("record_special.txt");
+    special_rec.getline(special_record, 256);
+    special_record_file = atoi(special_record);
+    special_rec.close();
+
+    SDL_RenderClear(renderer);
+    SDL_Rect menu_rect = { 0,0, SCREEN_WIDTH, SCREEN_HEIGHT };
+    SDL_Surface* menu = IMG_Load("menu_record.bmp");
+    SDL_Texture* menuTexture = SDL_CreateTextureFromSurface(renderer, menu);
+    SDL_FreeSurface(menu);
+    SDL_RenderCopy(renderer, menuTexture, NULL, &menu_rect);
+
+    SDL_Rect exit_menu = { (SCREEN_WIDTH - SCREEN_WIDTH / 1.8) / 2, SCREEN_HEIGHT / 7.5 * 6,SCREEN_WIDTH / 1.8 , SCREEN_WIDTH / 1.8 / 5.5 };
+    SDL_Surface* exit_menu_image = IMG_Load("exit_menu.bmp");
+    SDL_Texture* exit_menu_texture = SDL_CreateTextureFromSurface(renderer, exit_menu_image);
+    SDL_FreeSurface(exit_menu_image);
+    SDL_RenderCopy(renderer, exit_menu_texture, NULL, &exit_menu);//выход
+
+    _itoa_s(light_record_file, text1, 10);
+    _itoa_s(middle_record_file, text2, 10);
+    _itoa_s(special_record_file, text3, 10);
+
+    SDL_Texture* textTexture1 = get_text_texture_result(renderer, text1, my_font);
+    SDL_Texture* textTexture2 = get_text_texture_result(renderer, text2, my_font);
+    SDL_Texture* textTexture3 = get_text_texture_result(renderer, text3, my_font);
+
+    draw_text(renderer, textTexture1, 9, SCREEN_WIDTH/2+SCREEN_WIDTH/6-40, SCREEN_HEIGHT/4, 80, light_record_file);
+    draw_text(renderer, textTexture2, 9, SCREEN_WIDTH / 2 + SCREEN_WIDTH / 6-40, SCREEN_HEIGHT / 4 + 50+SCREEN_HEIGHT/8, 80, middle_record_file);
+    draw_text(renderer, textTexture3, 9, SCREEN_WIDTH / 2 + SCREEN_WIDTH / 6-40, SCREEN_HEIGHT / 4 + 45+SCREEN_HEIGHT/3, 80, special_record_file);
+
+    SDL_RenderPresent(renderer);
+    SDL_Event event;
+    bool quit = false;
+    while (!quit) {
+        while (SDL_PollEvent(&event))
+        {
+            if (event.type == SDL_QUIT) exit(1);
+            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+            {
+
+                if (is_button_hit(exit_menu, event.button.x, event.button.y))
+                {
+                    sound(buttonsound);
+                    return;////////выход в меню
+                }
+            }
+        }
+    }
 }
 
 int menu(SDL_Renderer*& renderer, SDL_Event event)
@@ -2342,6 +2503,7 @@ int main(int argc, char** argv)
     x[0] = x[1] = SCREEN_WIDTH / 2;
     Mix_Init(0);
     Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 1024);
+    loadmusic();
     int menu_chose = -1;
     char buttonsound[17] = "button.wav";
     
@@ -2397,8 +2559,8 @@ int main(int argc, char** argv)
                 if (level_chose == 4) { sound(buttonsound); break;}
                 if (level_chose == -1) { sound(buttonsound);return 0; }
             }
-            if (menu_chose == 2) { sound(buttonsound); if (settings(renderer, my_font, x) == -3) return 0; }
-            if (menu_chose == 3) sound(buttonsound);
+            if (menu_chose == 2) { sound(buttonsound); if (settings(renderer, my_font) == -3) return 0; }
+            if (menu_chose == 3) { sound(buttonsound); record_window(renderer); }
             if (menu_chose == 4) { sound(buttonsound);return 0; }
         }
     }
