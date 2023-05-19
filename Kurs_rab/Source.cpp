@@ -1100,7 +1100,11 @@ int draw_result(SDL_Renderer*& renderer, bool quit, SDL_Event event, int level, 
     draw_text(renderer, textTexture, 3, 0, 0, 0, 0);
     draw_text(renderer, textTexture2, 4, 0, 0, 0, 0);
 
-    SDL_Rect new_record = { SCREEN_WIDTH / 4.5, SCREEN_HEIGHT / 7.5 * 1.8,SCREEN_WIDTH / 1.7 , SCREEN_WIDTH / 1.8 / 6 };
+
+    int x0 = -1000, y0 = -1000, w0 = -1000, h0 = -1000;
+    if (f_l == 1 || f_m == 1 || f_s == 1) { x0 = SCREEN_WIDTH / 4.5;y0 = SCREEN_HEIGHT / 7.5 * 1.8; w0 = SCREEN_WIDTH / 1.7;h0 = SCREEN_WIDTH / 1.8 / 6; }
+
+    SDL_Rect new_record = { x0, y0,w0 , h0 };
     SDL_Surface* new_record_image = IMG_Load("new_record2.bmp");
     SDL_Texture* new_record_texture = SDL_CreateTextureFromSurface(renderer, new_record_image);
     SDL_FreeSurface(new_record_image);
@@ -1108,13 +1112,12 @@ int draw_result(SDL_Renderer*& renderer, bool quit, SDL_Event event, int level, 
     char text_record[10];
     _itoa_s(count_score, text_record, 10);
     SDL_Texture* textTexture5 = get_text_texture_result(renderer, text_record, my_font);
-    int x = new_record.x + new_record.w - 185, y = SCREEN_HEIGHT / 7.5 * 1.5 + 35, h = SCREEN_WIDTH / 1.8 / 5.8;
-    if (f_l == 1 || f_m == 1 || f_s == 1)
-    {
-        SDL_RenderCopy(renderer, new_record_texture, NULL, &new_record);
-        draw_text(renderer, textTexture5, 8, x,y,h,0);
+    int x = -1000, y =-1000, h = -1000;
+    if (f_l == 1 || f_m == 1 || f_s == 1) { x = new_record.x + new_record.w - 185; y = SCREEN_HEIGHT / 7.5 * 1.5 + 35; h = SCREEN_WIDTH / 1.8 / 5.8; }
+   
 
-    }
+    SDL_RenderCopy(renderer, new_record_texture, NULL, &new_record);
+    draw_text(renderer, textTexture5, 8, x, y, h, 0);
 
     SDL_Rect menu_res = { SCREEN_WIDTH / 8, SCREEN_HEIGHT - 1.5 * 235 / 2, 235, 235 / 2 };
     SDL_Surface* menu_res_image = IMG_Load("menu_res.bmp");
@@ -1131,46 +1134,53 @@ int draw_result(SDL_Renderer*& renderer, bool quit, SDL_Event event, int level, 
     SDL_RenderCopy(renderer, lvl_res_texture, NULL, &lvl_res);
     SDL_RenderPresent(renderer);
 
-  
-        if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
+    while (!quit)
+    {
+        while (SDL_PollEvent(&event))
         {
-            if (is_button_hit(menu_res, event.button.x, event.button.y))
+            if (event.type == SDL_QUIT) exit(1);
+            if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT)
             {
-                SDL_DestroyTexture(textTexture);
-                SDL_DestroyTexture(textTexture2);
-                TTF_CloseFont(my_font);
-                quit = true;
-                sound(buttonsound);
-                return -3;////////выход в меню
+                if (is_button_hit(menu_res, event.button.x, event.button.y))
+                {
+                    SDL_DestroyTexture(textTexture);
+                    SDL_DestroyTexture(textTexture2);
+                    TTF_CloseFont(my_font);
+                    quit = true;
+                    sound(buttonsound);
+                    return -3;////////выход в меню
+                }
+                if (is_button_hit(lvl_res, event.button.x, event.button.y))
+                {
+                    if (level == 1)
+                    {
+                        sound(buttonsound);
+                        int var1 = middle(renderer);
+                        if (var1 == 0) return -3;
+                        if (var1 == -3) return-3;
+                    }
+                    if (level == 2)
+                    {
+                        sound(buttonsound);
+                        if (chose_kolvo(renderer) == -1) return -1;
+                        int var2 = special(renderer);
+                        if (var2 == 0) return -3;
+                        if (var2 == -3) return-3;
+                    }
+                    if (level == 3)
+                    {
+                        sound(buttonsound);
+                        int var3 = light(renderer);
+                        if (var3 == 0) return -3;
+                        if (var3 == -3) return-3;
+                    }
+                }
+                //переход на следующий уровень
+
             }
-            if (is_button_hit(lvl_res, event.button.x, event.button.y))
-            {
-                if (level == 1)
-                {
-                    sound(buttonsound);
-                    int var1 = middle(renderer);
-                    if (var1 == 0) return -3;
-                    if (var1 == -3) return-3;
-                }
-                if (level == 2)
-                {
-                    sound(buttonsound);
-                    if (chose_kolvo(renderer) == -1) return -1;
-                    int var2 = special(renderer);
-                    if (var2 == 0) return -3;
-                    if (var2 == -3) return-3;
-                }
-                if (level == 3)
-                {
-                    sound(buttonsound);
-                    int var3 = light(renderer);
-                    if (var3 == 0) return -3;
-                    if (var3 == -3) return-3;
-                }
-            }
-            //переход на следующий уровень
-        
+        }
     }
+    if (quit==true) return -3;
 }
 
 int light(SDL_Renderer*& renderer)
